@@ -34,7 +34,6 @@ public enum RevealDirection {
 /// SideRevealView(
 ///     sideContent: { SideMenu() },
 ///     mainContent: { ContentView() },
-///     revealDirection: .leading,
 ///     isRevealed: true
 /// )
 /// ```
@@ -43,6 +42,7 @@ public struct SideRevealView<SideContentView: View, MainContentView: View>: View
     private let sideContent: () -> SideContentView
     private let mainContent: () -> MainContentView
     private let revealDirection: RevealDirection
+    private let revealAnimation: Animation
     
     @ObservedObject private var viewModel: SideRevealViewModel
     @State private var sideSize: CGSize = .zero
@@ -52,14 +52,17 @@ public struct SideRevealView<SideContentView: View, MainContentView: View>: View
     ///   - sideContent: The side content view instance to overlay and reveal.
     ///   - mainContent: The main content view instance displayed beneath the side content.
     ///   - revealDirection: The edge from which the side content is revealed. Defaults to `.leading`.
+    ///   - revealAnimation: The animation used when revealing or hiding the side content. Defaults to `.smooth`.
     ///   - isRevealedPublisher: A publisher that emits the reveal state. Defaults to a publisher that emits `true`.
     public init(sideContent: SideContentView,
                 mainContent: MainContentView,
                 revealDirection: RevealDirection = .leading,
+                revealAnimation: Animation = .smooth,
                 isRevealedPublisher: any Publisher<Bool, Never> = Just(true)) {
         self.sideContent = { sideContent }
         self.mainContent = { mainContent }
         self.revealDirection = revealDirection
+        self.revealAnimation = revealAnimation
         self.viewModel = .init(isRevealedPublisher: isRevealedPublisher)
     }
     
@@ -68,14 +71,17 @@ public struct SideRevealView<SideContentView: View, MainContentView: View>: View
     ///   - sideContent: A builder that returns the side content to overlay and reveal.
     ///   - mainContent: A builder that returns the main content displayed beneath the side content.
     ///   - revealDirection: The edge from which the side content is revealed. Defaults to `.leading`.
+    ///   - revealAnimation: The animation used when revealing or hiding the side content. Defaults to `.smooth`.
     ///   - isRevealed: The initial reveal state.
     public init(@ViewBuilder sideContent: @escaping () -> SideContentView,
                 @ViewBuilder mainContent: @escaping () -> MainContentView,
                 revealDirection: RevealDirection = .leading,
+                revealAnimation: Animation = .smooth,
                 isRevealed: Bool) {
         self.sideContent = sideContent
         self.mainContent = mainContent
         self.revealDirection = revealDirection
+        self.revealAnimation = revealAnimation
         self.viewModel = .init(isRevealedPublisher: Just(isRevealed))
     }
     
@@ -85,7 +91,7 @@ public struct SideRevealView<SideContentView: View, MainContentView: View>: View
                 sideContent()
                     .readSize(into: $sideSize)
                     .offset(x: viewModel.isRevealed ? 0 : closedOffsetX(for: revealDirection.alignment, sideWidth: sideSize.width))
-                    .animation(.smooth, value: viewModel.isRevealed)
+                    .animation(revealAnimation, value: viewModel.isRevealed)
             }
     }
     
