@@ -7,4 +7,10 @@
    <FileRef
       location = "group:LICENCE">
    </FileRef>
+   <FileRef
+      location = "group:Examples/SideRevealKitExample.xcodeproj">
+   </FileRef>
+   <FileRef
+      location = "group:">
+   </FileRef>
 </Workspace>
