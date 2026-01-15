@@ -30,17 +30,43 @@ struct SideRevealKitExampleApp: App {
                 isRevealed.toggle()
                 try? await Task.sleep(nanoseconds: 1_000_000_000)
                 isRevealed.toggle()
+                try? await Task.sleep(nanoseconds: 1_000_000_000)
+                isRevealed.toggle()
             }
         }
     }
     
     @ViewBuilder
     private var sideContent: some View {
-        Color.red.frame(width: 100, height: 300).overlay{ Text("Side") }
+        Form {
+            Text("One")
+            Text("Two")
+            Text("Three")
+        }
+        .scrollDisabled(true)
+        .scrollContentBackground(.hidden)
+        .frame(width: 300)
+        .cornerRadius(24)
+        .glassEffect(.clear.interactive(),
+                     in: RoundedRectangle(cornerRadius: 24))
+        .padding(.vertical, 50)
+        .padding(.horizontal)
     }
     
     @ViewBuilder
     private var mainContent: some View {
-        Color.blue.frame(width: 200, height: 600).overlay{ Text("Front") }
+        VStack(alignment: .leading) {
+            Button("", systemImage: "gear") {
+                isRevealed.toggle()
+            }
+            .padding()
+            Form {
+                Text("One")
+                Text("Two")
+                Text("Three")
+            }
+            .scrollContentBackground(.hidden)
+        }
+        .background(.green)
     }
 }
