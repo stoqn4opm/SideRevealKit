@@ -17,9 +17,9 @@ public enum RevealDirection {
     var alignment: Alignment {
         switch self {
         case .leading:
-            .leading
+                .leading
         case .trailing:
-            .trailing
+                .trailing
         }
     }
 }
@@ -37,29 +37,33 @@ public enum RevealDirection {
 ///     isRevealed: true
 /// )
 /// ```
-public struct SideRevealView<SideContentView: View, MainContentView: View>: View {
+public struct SideRevealView<SideContentView: View, SideContentBackgroundView: View, MainContentView: View>: View {
     
     private let sideContent: () -> SideContentView
+    private let sideContentBackground: () -> SideContentBackgroundView
     private let mainContent: () -> MainContentView
     private let revealDirection: RevealDirection
     private let revealAnimation: Animation
     
     @ObservedObject private var viewModel: SideRevealViewModel
     @State private var sideSize: CGSize = .zero
-
+    
     /// Creates a side reveal view with concrete side and main views and a publisher controlling reveal state.
     /// - Parameters:
     ///   - sideContent: The side content view instance to overlay and reveal.
+    ///   - sideContentBackground: View that gets placed behind sideContent and above mainContent, when the side content is visible
     ///   - mainContent: The main content view instance displayed beneath the side content.
     ///   - revealDirection: The edge from which the side content is revealed. Defaults to `.leading`.
     ///   - revealAnimation: The animation used when revealing or hiding the side content. Defaults to `.smooth`.
     ///   - isRevealedPublisher: A publisher that emits the reveal state. Defaults to a publisher that emits `true`.
     public init(sideContent: SideContentView,
+                sideContentBackground: SideContentBackgroundView = EmptyView(),
                 mainContent: MainContentView,
                 revealDirection: RevealDirection = .leading,
                 revealAnimation: Animation = .smooth,
                 isRevealedPublisher: any Publisher<Bool, Never> = Just(true)) {
         self.sideContent = { sideContent }
+        self.sideContentBackground = { sideContentBackground }
         self.mainContent = { mainContent }
         self.revealDirection = revealDirection
         self.revealAnimation = revealAnimation
@@ -69,16 +73,19 @@ public struct SideRevealView<SideContentView: View, MainContentView: View>: View
     /// Creates a side reveal view using view builders and a fixed initial reveal state.
     /// - Parameters:
     ///   - sideContent: A builder that returns the side content to overlay and reveal.
+    ///   - sideContentBackground: View that gets placed behind sideContent and above mainContent, when the side content is visible
     ///   - mainContent: A builder that returns the main content displayed beneath the side content.
     ///   - revealDirection: The edge from which the side content is revealed. Defaults to `.leading`.
     ///   - revealAnimation: The animation used when revealing or hiding the side content. Defaults to `.smooth`.
     ///   - isRevealed: The initial reveal state.
     public init(@ViewBuilder sideContent: @escaping () -> SideContentView,
+                @ViewBuilder sideContentBackground: @escaping () -> SideContentBackgroundView = { EmptyView() },
                 @ViewBuilder mainContent: @escaping () -> MainContentView,
                 revealDirection: RevealDirection = .leading,
                 revealAnimation: Animation = .smooth,
                 isRevealed: Bool) {
         self.sideContent = sideContent
+        self.sideContentBackground = sideContentBackground
         self.mainContent = mainContent
         self.revealDirection = revealDirection
         self.revealAnimation = revealAnimation
@@ -88,10 +95,15 @@ public struct SideRevealView<SideContentView: View, MainContentView: View>: View
     public var body: some View {
         mainContent()
             .overlay(alignment: revealDirection.alignment) {
-                sideContent()
-                    .readSize(into: $sideSize)
-                    .offset(x: viewModel.isRevealed ? 0 : closedOffsetX(for: revealDirection.alignment, sideWidth: sideSize.width))
-                    .animation(revealAnimation, value: viewModel.isRevealed)
+                ZStack {
+                    sideContentBackground()
+                        .opacity(viewModel.isRevealed ? 1 : 0)
+                        .animation(revealAnimation, value: viewModel.isRevealed)
+                    sideContent()
+                        .readSize(into: $sideSize)
+                        .offset(x: viewModel.isRevealed ? 0 : closedOffsetX(for: revealDirection.alignment, sideWidth: sideSize.width))
+                        .animation(revealAnimation, value: viewModel.isRevealed)
+                }
             }
     }
     
